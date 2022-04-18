@@ -9,9 +9,13 @@
 #include <string>
 #include <stdio.h>
 
-#include "Source1.h"
-
+#include "Source.h"
 #include "stb_image.h"
+
+#include "Shader.h"
+#include "Volume.h"
+
+#include "LookUpTables.h"
 
 #define PI glm::pi<float>()
 
@@ -34,10 +38,43 @@ float texCoords[] = {
 0.5f, 1.0f // top-center corner
 };
 
-int main()
-{
-	GLFWwindow* window = initWindow();
 
+int main() {
+	Volume volume(3, 3, 3);
+
+	for (int f1 = 0; f1 < 2; f1++) {
+		for (int f2 = 0; f2 < 3; f2++) {
+			for (int f3 = 0; f3 < 3; f3++) {
+				volume.setElement(f1, f2, f3, 1);
+			}
+		}
+	}
+
+
+	volume.computeCubes();
+	for (int f1 = 0; f1 <2; f1++) {
+
+		for (int f2 = 0; f2 < 2; f2++) {
+
+			for (int f3 = 0; f3 < 2; f3++) {
+
+				//cout << volume.getCube(f1, f2, f3)->getIndex() << " ";
+				cout << Tables::edgeTable[volume.getCube(f1, f2, f3).getIndex()] << "   ";
+
+			}
+			cout << "\n";
+		}
+		cout << "\n";
+	}
+
+}
+
+int altmain()
+{
+
+
+
+	GLFWwindow* window = initWindow();
 
 	//Texture space
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
@@ -71,37 +108,17 @@ int main()
 	{
 		std::cout << "Failed to load texture" << std::endl;
 	}
+
 	stbi_image_free(data);	//glGenerateMipmap(GL_TEXTURE_2D);
 
 
-	//Loadind  shaders
-	std::string vstext = textFileRead("vertex.vert");
-	std::string fstext = textFileRead("fragment.frag");
-	const char* vertexShaderSource = vstext.c_str();
-	const char* fragmentShaderSource = fstext.c_str();
 
-	//We create open GL shaders
-	unsigned int vertexShader = createShader(vertexShaderSource, GL_VERTEX_SHADER);
-	unsigned int fragmentShader = createShader(fragmentShaderSource, GL_FRAGMENT_SHADER);
-
-	//We create the final shader program
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
-
-	//We attach the vertex program
-	glAttachShader(shaderProgram, vertexShader);
-	//We attach the fragment shader
-	glAttachShader(shaderProgram, fragmentShader);
-
-	//We load the created shader program
-	//Every shader and rendering call after glUseProgram will now use this program object
-	glLinkProgram(shaderProgram);
-	glUseProgram(shaderProgram);
-
-	//Some cleaning 
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	Shader myCoolShader = Shader("vertex.vert", "fragment.frag");
+	glUseProgram(myCoolShader.getID());
 	
+
+
+
 	//We encapsulate a good ammount of state inside of a VAO (Vertex Array Object)
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
@@ -149,22 +166,11 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 
-		glm::mat4 projectionMatrix;
+		//GLuint matrixID = glGetUniformLocation(shaderProgram,"modelViewProjectionMatrix");
+		GLuint matrixID = myCoolShader.getUniform("modelViewProjectionMatrix");
 
-		projectionMatrix = glm::perspective(PI / 3, 1.0f, 0.1f, 100.0f);
-		float xv = 2, yv = 2, zv = 30; //originea sistemului de observare
-
-		//viewMatrix = glm::lookAt(glm::vec3(xv, yv, zv), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-
-		glm::mat4 viewMatrix = glm::mat4(1.0f);
-		// note that we’re translating the scene in the reverse direction
-		viewMatrix = glm::translate(viewMatrix, glm::vec3(0.0f, 0.0f, -3.0f));
-
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::rotate(model, (float)glfwGetTime(),  glm::vec3(1.0f, 0.0f, 0.0f));
-
-		GLuint matrixID = glGetUniformLocation(shaderProgram,"modelViewProjectionMatrix");
-		glUniformMatrix4fv(matrixID, 1, GL_FALSE, glm::value_ptr(projectionMatrix* viewMatrix * model));
+		glm::mat4 final = calculateFinalMatrix();
+		glUniformMatrix4fv(matrixID, 1, GL_FALSE, glm::value_ptr(final));
 
 
 		glBindTexture(GL_TEXTURE_2D, texture);
@@ -180,28 +186,22 @@ int main()
 	return 0;
 }
 
+glm::mat4 calculateFinalMatrix() {
+	glm::mat4 projectionMatrix;
 
-unsigned int createShader(const char* shaderSource, unsigned int shaderType) {
-	//Vertex shader creation
-	unsigned int shader;
-	//GL_VERTEX_SHADER
-	shader = glCreateShader(shaderType);
-	//Vertex Shader compilation
-	glShaderSource(shader, 1, &shaderSource, NULL);
-	glCompileShader(shader);
+	projectionMatrix = glm::perspective(PI / 3, 1.0f, 0.1f, 100.0f);
+	float xv = 2, yv = 2, zv = 30; //originea sistemului de observare
 
-	//We check if compilation was succsesful 
-	int success;
-	char infoLog[512];
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(shader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" <<
-			infoLog << std::endl;
-	}
+	//viewMatrix = glm::lookAt(glm::vec3(xv, yv, zv), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
-	return shader;
+	glm::mat4 viewMatrix = glm::mat4(1.0f);
+	// note that we’re translating the scene in the reverse direction
+	viewMatrix = glm::translate(viewMatrix, glm::vec3(0.0f, 0.0f, -3.0f));
+
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::mat4 final = projectionMatrix * viewMatrix * model;
+	return final;
 }
 
 
