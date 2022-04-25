@@ -13,6 +13,9 @@ using namespace std;
 
 typedef unsigned int uint;
 
+
+
+
 class VolumeCube {
 private:
 	bitset<8> _pointsInsideBitset;
@@ -39,6 +42,9 @@ private:
 	uint _sizeX;
 	uint _sizeY;
 	uint _sizeZ;
+
+	float _threshold = 0.5;
+
 public:
 
 	Volume(uint sizeX, uint sizeY, uint sizeZ) {
@@ -77,8 +83,31 @@ public:
 		volumeData[x][y][z] = value;
 	}
 
+
+	void clear() {
+		for (uint x = 0; x < _sizeX; x++) {
+			for (uint y = 0; y < _sizeY ; y++) {
+				for (uint z = 0; z < _sizeZ ; z++) {
+					volumeData[x][y][z] = 0;
+				}
+			}
+		}
+	}
+
+	void setThreshold(float threshold) {
+		_threshold = threshold;
+	}
+
+	float getThreshold() {
+		return _threshold;
+	}
+
+
 	VolumeCube getCube(uint x, uint y, uint z) {
-		return *volumeCubes[x][y][z];
+	
+		VolumeCube tmp = *volumeCubes[ x][ y][ z];
+		return tmp;		
+
 	}
 
 	void computeCubes() {
@@ -87,33 +116,34 @@ public:
 				for (uint z = 0; z < _sizeZ - 1; z++) {
 
 					vector<int> pointsInside;
-
+					int temp = x;
 
 					int X = x + 1, Y = y + 1, Z = z + 1;
+
 					//Danger zone
-					if (isPointThere(x, y, z)) { //000
+					if (isPointThere(x, y, z)) { \
 						pointsInside.push_back(0);
 					}
-					if (isPointThere(x, y, Z)) { //001
-						pointsInside.push_back(1);
+					if (isPointThere(x, Y, z)) {  
+						pointsInside.push_back(1);  //
 					}
-					if (isPointThere(x, Y, z)) { //010
+					if (isPointThere(X, Y, z)) {
 						pointsInside.push_back(2);
 					}
-					if (isPointThere(x, Y, Z)) { //011
-						pointsInside.push_back(3);
+					if (isPointThere(X, y, z)) {
+						pointsInside.push_back(3);  //
 					}
-					if (isPointThere(X, y, z)) { //100
+					if (isPointThere(x, y, Z)) { //100
 						pointsInside.push_back(4);
 					}
-					if (isPointThere(X, y, Z)) { //101
-						pointsInside.push_back(5);
+					if (isPointThere(x, Y, Z)) { 
+						pointsInside.push_back(5);  //
 					}
-					if (isPointThere(X, Y, z)) {  //110
+					if (isPointThere(X, Y, Z)) {  
 						pointsInside.push_back(6);
 					}
-					if (isPointThere(X, Y, z)) { //111
-						pointsInside.push_back(7);
+					if (isPointThere(X, y, Z)) { 
+						pointsInside.push_back(7); //
 					}
 
 					if (volumeCubes[x][y][z] != nullptr) {
@@ -130,7 +160,7 @@ public:
 
 private:
 	bool isPointThere(uint x, uint y, uint z) {
-		if (volumeData[x][y][z] > 0.5) {
+		if (volumeData[x][y][z] > _threshold) {
 			return true;
 		}
 		return false;
