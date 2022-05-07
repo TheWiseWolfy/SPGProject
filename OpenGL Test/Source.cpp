@@ -20,6 +20,9 @@
 #include "Triangle.h"
 #include "PerlinNoise.h"
 
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+
+
 #define PI glm::pi<float>()
 
 float verticalRotationLevel = 0;
@@ -35,11 +38,16 @@ float granularity = 0.9;
 float offset = 0.9;
 PerlinNoise noiseGenerator;
 
+float deltaTime = 0.0f;	// Time between current frame and last frame
+float lastFrame = 0.0f; // Time of last frame
+
 int openGLmain()
 {
 	GLFWwindow* window = initWindow();
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	glfwSetKeyCallback(window, key_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
@@ -66,9 +74,16 @@ int openGLmain()
 	glEnableVertexAttribArray(1);
 
 
+
+
 	//Main aplication loop
 	while (!glfwWindowShouldClose(window))
 	{
+
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
 		offset += 0.02;
 		generateTerrain();
 
@@ -96,6 +111,7 @@ int openGLmain()
 		glBufferData(GL_ARRAY_BUFFER, nrVertices * 6 * sizeof(float), cube, GL_STATIC_DRAW);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+
 		for(int f1 = 0; f1 < sizeV -1; f1++){
 			for (int f2 = 0; f2 < sizeV -1; f2++) {
 				for (int f3 = 0; f3 < sizeV - 1; f3++) {
@@ -119,8 +135,10 @@ int openGLmain()
 }
 
 
-
 int main() {
+	
+
+	
 
 	generateTerrain();
 	displayTerrain();
@@ -234,27 +252,33 @@ void displayTerrain() {
 }
 
 
+glm::vec3 cameraPos = glm::vec3(0.0f,0.0f, 100.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+float yaw = -90.0f, pitch;
 
-
-float cameraPozX = -5.0f;
-float cameraPozY = -13.0f;
-float cameraPozZ = -30.0f;
 
 glm::mat4 calculateFinalMatrix() {
 	glm::mat4 projectionMatrix;
 
+	//Perspective Matrix
 	projectionMatrix = glm::perspective(PI / 3, 1.0f, 0.1f, 100.0f);
-	float xv = 2, yv = 2, zv = 30; //originea sistemului de observare
 
-	//viewMatrix = glm::lookAt(glm::vec3(xv, yv, zv), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-	glm::mat4 viewMatrix = glm::mat4(1.0f);
-	// note that we’re translating the scene in the reverse direction
+	//View Matrix
+	
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
 
+	glm::mat4 viewMatrix;
+	viewMatrix = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+	// Model Matrix
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::rotate(model, horizontalRotationLevel, glm::vec3(0.0f, 1.0f, 0.0f));
-	model = glm::rotate(model, verticalRotationLevel, glm::vec3(1.0f, 0.0f, 0.0f));
 
-	viewMatrix = glm::translate(viewMatrix, glm::vec3(cameraPozX, cameraPozY, cameraPozZ));
+	//viewMatrix = glm::translate(viewMatrix, glm::vec3(cameraPozX, cameraPozY, cameraPozZ));
 
 	glm::mat4 final = projectionMatrix * viewMatrix * model;
 	return final;
@@ -314,8 +338,48 @@ void processInput(GLFWwindow* window){
 		glfwSetWindowShouldClose(window, true);
 }
 
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+
+	float cameraSpeed =  deltaTime;
+
+
+	float lastX = 400, lastY = 300;
+
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos; // reversed since y-coordinates range from bottom to top
+	lastX = xpos;
+	lastY = ypos;
+
+	const float sensitivity = 0.003f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	bool firstMouse = true;
+	if (firstMouse) // initially set to true
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	yaw += xoffset * cameraSpeed;
+	pitch += yoffset * cameraSpeed;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	
+}
+
+
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	float cameraSpeed = 20.0f * deltaTime;
+
 	if (key == GLFW_KEY_W && action == GLFW_PRESS)
 		verticalRotationLevel += 0.1;
 
@@ -328,26 +392,18 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_D && action == GLFW_PRESS)
 		horizontalRotationLevel -= 0.1;
 
-	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
-		cameraPozX += 0.5;
-
-	if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
-		cameraPozX -= 0.5;
-
-
-	if (key == GLFW_KEY_UP && action == GLFW_PRESS)
-		cameraPozY += 0.5;
-
-	if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
-		cameraPozY -= 0.5;
-
-
-	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-		cameraPozZ += 1;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		cameraPos += cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		cameraPos -= cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 
 
 	if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
-		cameraPozZ -= 1;
+	//	cameraPozZ -= 1;
 
 	if (key == GLFW_KEY_F && action == GLFW_PRESS)
 		changeSeed();
@@ -380,5 +436,4 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		generateTerrain();
 	}
 }
-
 

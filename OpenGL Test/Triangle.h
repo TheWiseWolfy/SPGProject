@@ -10,6 +10,7 @@ struct Triangle {
 
     glm::vec3 vertex3;
     glm::vec3 color3;
+
     void mofify(int translateX , int translateY, int translateZ) {
 
         vertex1.x += translateX;

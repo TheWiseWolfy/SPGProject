@@ -158,6 +158,7 @@
     <None Include="vertex.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="GenericCube.h" />
     <ClInclude Include="LookUpTables.h" />
     <ClInclude Include="Mesh.h" />
