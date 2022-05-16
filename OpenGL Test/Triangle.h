@@ -4,12 +4,15 @@
 struct Triangle {
     glm::vec3 vertex1;
     glm::vec3 color1;
+    glm::vec3 normal1;
 
     glm::vec3 vertex2;
     glm::vec3 color2;
+    glm::vec3 normal2;
 
     glm::vec3 vertex3;
     glm::vec3 color3;
+    glm::vec3 normal3;
 
     void mofify(int translateX , int translateY, int translateZ) {
 

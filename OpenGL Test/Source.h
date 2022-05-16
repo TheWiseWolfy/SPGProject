@@ -1,13 +1,14 @@
 #pragma once
 
-std::string textFileRead(const char* fn);
 
 glm::mat4 calculateFinalMatrix();
 
 void generateTerrain();
-void displayTerrain();
+void generateTerrainGeometry();
+int openGLmain(GLFWwindow* window);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 void processInput(GLFWwindow* window);
@@ -29,52 +30,3 @@ int nrVertices = nrFaces * nrVerticesPerFace;
 float L = 0.5f;
 
 //trebuie adaugate coordonatele vectorilor normali pentru fiecare vertex, pe langa pozitie
-float cube[] = {
-	L, -L, -L,
-	L, -L, L,
-	L, L, L,
-
-	L, -L, -L,
-	L, L, -L,
-	L, L, L,
-
-	-L, -L, -L,
-	-L, L, -L,
-	-L, L, L,
-
-	-L, -L, -L,
-	-L, -L, L,
-	-L, L, L,
-
-	L, L, -L,
-	L, L, L,
-	-L, L, L,
-
-	L, L, -L,
-	-L, L, -L,
-	-L, L, L,
-
-	L, -L, -L,
-	L, -L, L,
-	-L, -L, L,
-
-	L, -L, -L,
-	-L, -L, -L,
-	-L, -L, L,
-
-	L, -L, L,
-	L, L, L,
-	-L, L, L,
-
-	L, -L, L,
-	-L, -L, L,
-	-L, L, L,
-
-	L, -L, -L,
-	L, L, -L,
-	-L, L, -L,
-
-	L, -L, -L,
-	-L, -L, -L,
-	-L, L, -L
-};

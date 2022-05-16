@@ -14,8 +14,6 @@ using namespace std;
 typedef unsigned int uint;
 
 
-
-
 class VolumeCube {
 private:
 	bitset<8> _pointsInsideBitset;

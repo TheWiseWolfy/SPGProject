@@ -1,8 +1,5 @@
 #pragma once
 
-
-
-
 struct Tables{
 
 static constexpr int edgeTable[256] = {
