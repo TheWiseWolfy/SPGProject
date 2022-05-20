@@ -11,26 +11,17 @@
 
 #include "Source.h"
 #include "stb_image.h"
-
+#include "ProceduralGenerator.h"
 #include "Shader.h"
-#include "Volume.h"
 #include "Camera.h"
 
-#include "LookUpTables.h"
-#include "GenericCube.h"
 #include "Triangle.h"
-#include "PerlinNoise.h"
 
 #define PI glm::pi<float>()
-vector<Triangle> trianglesToDraw;
 vector<Triangle> wireframeCubes;
 
-uint sizeV = 100;
-Volume volume(sizeV, sizeV, sizeV);
 
-float granularity = 8.0f;
-float offset = 0.0f;
-PerlinNoise noiseGenerator;
+
 
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
@@ -42,6 +33,8 @@ float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 
 bool firstMouse = true;
+vector<Triangle> trianglesToDraw2;
+
 
 int main() {
 	glm::vec3 position = glm::vec3(0.0f, 90.0f, -30.0f);
@@ -53,8 +46,9 @@ int main() {
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 
-	generateTerrain();
-	generateTerrainGeometry();
+	ProceduralGenerator gen(50,50,50);
+
+	trianglesToDraw2 = gen.generateGeometry();
 	openGLmain(window);
 }
 
@@ -119,8 +113,8 @@ int openGLmain(GLFWwindow* window){
 
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glBufferData(GL_ARRAY_BUFFER, trianglesToDraw.size() * sizeof(Triangle), trianglesToDraw.data(), GL_STATIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, trianglesToDraw.size() * 3);
+		glBufferData(GL_ARRAY_BUFFER, trianglesToDraw2.size() * sizeof(Triangle), trianglesToDraw2.data(), GL_STATIC_DRAW);
+		glDrawArrays(GL_TRIANGLES, 0, trianglesToDraw2.size() * 3);
 
 		glfwSwapBuffers(window);
 	}
@@ -130,123 +124,11 @@ int openGLmain(GLFWwindow* window){
 }
 
 
-void changeSeed() {
-	srand(time(NULL));
-	noiseGenerator = PerlinNoise((float)rand());
-}
 
-void generateTerrain() {
-
-	volume.clear();
-
-	for (int f1 = 0; f1 < sizeV; f1++) {
-		for (int f2 = 0; f2 < sizeV; f2++) {
-
-		
-			for (int f3 = 0; f3 < sizeV; f3++) {
-
-				float maxHeight = noiseGenerator.noise(f1 / (float)sizeV * granularity, f2 / (float)sizeV * granularity, f3 / (float)sizeV * granularity);
-				volume.setElement(f1, f3, f2, maxHeight);
-			}
-			
-
-			//float noise = noiseGenerator.noise(f1 / (float)sizeV * granularity + offset, f2 / (float)sizeV * granularity + offset ,0.7 );
-			//int actualHeight = noise * sizeV ;
-
-			//if (actualHeight > sizeV) {
-			//	actualHeight = sizeV ;
-			//}
-
-			//if (actualHeight < 0) {
-			//	actualHeight = 0;
-			//}
-
-			//for (int f3 = 0; f3 < actualHeight; f3++) {
-
-			//	volume.setElement(f1, f3, f2, 1);
-			//}
-		}
-	}
-
-	generateTerrainGeometry();
-}
 
 glm::vec3 oldNormal = glm::vec3(0,1,0);
 
 
-void generateTerrainGeometry() {
-	volume.computeCubes();
-
-	trianglesToDraw.clear();
-
-	for (int f1 = 0; f1 < sizeV - 1; f1++) {
-
-		for (int f2 = 0; f2 < sizeV - 1; f2++) {
-
-			for (int f3 = 0; f3 < sizeV - 1; f3++) {
-
-				int volumeIndex = volume.getCube(f1, f2, f3).getIndex();
-
-				//pentru fiecare tringhi
-				for (int f4 = 0; Tables::triTable[volumeIndex][f4] != -1; f4 += 3) {
-
-					int vertex1Index = Tables::triTable[volumeIndex][f4];
-					int vertex2Index = Tables::triTable[volumeIndex][f4 + 1];
-					int vertex3Index = Tables::triTable[volumeIndex][f4 + 2];
-
-					int a0 = Tables::cornerIndexAFromEdge[vertex1Index];
-					int b0 = Tables::cornerIndexBFromEdge[vertex1Index];
-
-					int a1 = Tables::cornerIndexAFromEdge[vertex2Index];
-					int b1 = Tables::cornerIndexBFromEdge[vertex2Index];
-
-					int a2 = Tables::cornerIndexAFromEdge[vertex3Index];
-					int b2 = Tables::cornerIndexBFromEdge[vertex3Index];
-
-					Triangle trig;
-
-					trig.vertex1 = avarageVec3(corners[a0], corners[b0]);
-					trig.vertex2 = avarageVec3(corners[a1], corners[b1]);
-					trig.vertex3 = avarageVec3(corners[a2], corners[b2]);
-
-					float finalColorR = ((float)f3 / sizeV);
-					float finalColorG = ((float)f2 / sizeV);
-					float finalColorB = ((float)f1 / sizeV);
-
-
-					trig.color1.r = finalColorR;
-					trig.color1.g = finalColorG;
-					trig.color1.b = finalColorB;
-
-					trig.color2.r = finalColorR;
-					trig.color2.g = finalColorG;
-					trig.color2.b = finalColorB;
-
-					trig.color3.r = finalColorR;
-					trig.color3.g = finalColorG;
-					trig.color3.b = finalColorB;
-
-					trig.normal1.x = trig.vertex1.y * trig.vertex2.z - trig.vertex1.z * trig.vertex2.y;
-					trig.normal1.y = trig.vertex1.z * trig.vertex2.x - trig.vertex1.x * trig.vertex2.z;
-					trig.normal1.z = trig.vertex1.x * trig.vertex2.y - trig.vertex1.y * trig.vertex2.x;
-
-					float scalarProduct = oldNormal.x * trig.normal1.x + oldNormal.y * trig.normal1.y + oldNormal.z * trig.normal1.z;
-
-					if (scalarProduct < 0) {
-						trig.normal1 = -trig.normal1;
-					}
-					trig.normal2 = trig.normal1;
-					trig.normal3 = trig.normal1;
-
-					oldNormal = trig.normal1;
-
-					trig.mofify(f1, f2, f3);
-					trianglesToDraw.push_back(trig);
-				}
-			}
-		}
-	}
-}
 
 glm::mat4 calculateFinalMatrix() {
 	glm::mat4 projectionMatrix;
@@ -334,58 +216,58 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	float cameraSpeed = 20.0f * deltaTime;
-
-	if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
-	//	cameraPozZ -= 1;
-
-	if (key == GLFW_KEY_F && action == GLFW_PRESS) {
-		changeSeed();
-		generateTerrain();
-	}
-
-	if (key == GLFW_KEY_U && action == GLFW_PRESS) {
-		volume.setThreshold(volume.getThreshold() + 0.05);
-		generateTerrainGeometry();
-	}
-	if (key == GLFW_KEY_I && action == GLFW_PRESS) {
-		volume.setThreshold(volume.getThreshold() - 0.05);
-		generateTerrainGeometry();
-	}
-
-	if (key == GLFW_KEY_J && action == GLFW_PRESS) {
-		granularity -= 0.1;
-		generateTerrain();
-	}
-
-	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
-		granularity += 0.1;
-		generateTerrain();
-	}
-
-	if (key == GLFW_KEY_N && action == GLFW_PRESS) {
-		offset -= 0.05;
-		generateTerrain();
-	}
-	if (key == GLFW_KEY_M && action == GLFW_PRESS) {
-		offset += 0.05;
-		generateTerrain();
-	}
-
-
-	//if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-	//	glfwSetWindowShouldClose(window, true);
-
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera.ProcessKeyboard(FORWARD, deltaTime);
-
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.ProcessKeyboard(BACKWARD, deltaTime);
-
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera.ProcessKeyboard(LEFT, deltaTime);
-
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera.ProcessKeyboard(RIGHT, deltaTime);
+//	float cameraSpeed = 20.0f * deltaTime;
+//
+//	if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
+//	//	cameraPozZ -= 1;
+//
+//	if (key == GLFW_KEY_F && action == GLFW_PRESS) {
+//		changeSeed();
+//		generateTerrain();
+//	}
+//
+//	if (key == GLFW_KEY_U && action == GLFW_PRESS) {
+//		volume.setThreshold(volume.getThreshold() + 0.05);
+//		generateTerrainGeometry();
+//	}
+//	if (key == GLFW_KEY_I && action == GLFW_PRESS) {
+//		volume.setThreshold(volume.getThreshold() - 0.05);
+//		generateTerrainGeometry();
+//	}
+//
+//	if (key == GLFW_KEY_J && action == GLFW_PRESS) {
+//		granularity -= 0.1;
+//		generateTerrain();
+//	}
+//
+//	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
+//		granularity += 0.1;
+//		generateTerrain();
+//	}
+//
+//	if (key == GLFW_KEY_N && action == GLFW_PRESS) {
+//		offset -= 0.05;
+//		generateTerrain();
+//	}
+//	if (key == GLFW_KEY_M && action == GLFW_PRESS) {
+//		offset += 0.05;
+//		generateTerrain();
+//	}
+//
+//
+//	//if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+//	//	glfwSetWindowShouldClose(window, true);
+//
+//	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+//		camera.ProcessKeyboard(FORWARD, deltaTime);
+//
+//	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+//		camera.ProcessKeyboard(BACKWARD, deltaTime);
+//
+//	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+//		camera.ProcessKeyboard(LEFT, deltaTime);
+//
+//	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+//		camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 

@@ -16,6 +16,12 @@
     <Filter Include="Source Files\Objects">
       <UniqueIdentifier>{ff57918c-8759-4197-8d74-604d7f00310b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Renderer">
+      <UniqueIdentifier>{faa216f1-cff6-4b02-9619-eb76dadf2a60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Procedural Generation">
+      <UniqueIdentifier>{edd44d47-5904-4e15-ae17-c4739e8feced}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">
@@ -30,8 +36,14 @@
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files\Objects</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
     <ClCompile Include="PerlinNoise.cpp">
-      <Filter>Source Files\Objects</Filter>
+      <Filter>Source Files\Procedural Generation</Filter>
+    </ClCompile>
+    <ClCompile Include="ProceduralGenerator.cpp">
+      <Filter>Source Files\Procedural Generation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -61,17 +73,20 @@
     <ClInclude Include="LookUpTables.h">
       <Filter>Source Files\Objects</Filter>
     </ClInclude>
-    <ClInclude Include="GenericCube.h">
-      <Filter>Source Files\Objects</Filter>
-    </ClInclude>
     <ClInclude Include="Triangle.h">
       <Filter>Source Files\Objects</Filter>
     </ClInclude>
-    <ClInclude Include="PerlinNoise.h">
-      <Filter>Source Files\Objects</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>Source Files\Objects</Filter>
+      <Filter>Source Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>Source Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="ProceduralGenerator.h">
+      <Filter>Source Files\Procedural Generation</Filter>
+    </ClInclude>
+    <ClInclude Include="PerlinNoise.h">
+      <Filter>Source Files\Procedural Generation</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
