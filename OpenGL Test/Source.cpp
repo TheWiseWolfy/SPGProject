@@ -9,7 +9,6 @@
 #include <string>
 #include <stdio.h>
 
-#include "Source.h"
 #include "stb_image.h"
 #include "ProceduralGenerator.h"
 #include "Shader.h"
@@ -18,10 +17,6 @@
 #include "Triangle.h"
 
 #define PI glm::pi<float>()
-vector<Triangle> wireframeCubes;
-
-
-
 
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
@@ -33,11 +28,19 @@ float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 
 bool firstMouse = true;
-vector<Triangle> trianglesToDraw2;
+vector<Triangle> trianglesToDraw;
+ProceduralGenerator gen(10, 10, 10);
 
+//Local fuctions 
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+glm::mat4 calculateFinalMatrix();
+int openGLmain(GLFWwindow* window);
+GLFWwindow* initWindow();
 
 int main() {
-	glm::vec3 position = glm::vec3(0.0f, 90.0f, -30.0f);
+	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 	camera = Camera(position);
 
 	GLFWwindow* window = initWindow();
@@ -46,13 +49,13 @@ int main() {
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 
-	ProceduralGenerator gen(50,50,50);
 
-	trianglesToDraw2 = gen.generateGeometry();
 	openGLmain(window);
 }
 
 int openGLmain(GLFWwindow* window){
+
+
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LEQUAL);
@@ -79,16 +82,23 @@ int openGLmain(GLFWwindow* window){
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(glm::vec3), (void*)(2 * sizeof(glm::vec3)));
 	glEnableVertexAttribArray(2);
 
+	glm::vec3 lightPos(0, 1, 5);
+	glm::vec3 viewPos(2, 3, 6);
+
 	//Main aplication loop
 	while (!glfwWindowShouldClose(window))
 	{
+		trianglesToDraw = gen.GenerateAroundPlayer(camera.Position);
 
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
 		//Here we check for inputs 
-		processInput(window);
+		glfwPollEvents();
+
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+			glfwSetWindowShouldClose(window, true);
 
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -97,24 +107,25 @@ int openGLmain(GLFWwindow* window){
 
 		//GLuint matrixID = glGetUniformLocation(shaderProgram,"modelViewProjectionMatrix");
 		GLuint matrixID = myCoolShader.getUniform("modelViewProjectionMatrix");
-
-		
-		glm::vec3 lightPos(0, 1, 5);
-		glm::vec3 viewPos(2, 3, 6);
 		
 		glm::mat4 final = calculateFinalMatrix();
 		glUniformMatrix4fv(matrixID, 1, GL_FALSE, glm::value_ptr(final));
 		
 		int lightPosLoc = myCoolShader.getUniform("lightPos");
+		//glUniform3fv(lightPosLoc, 1, glm::value_ptr(glm::vec3(0,0,90)   ));
 		glUniform3fv(lightPosLoc, 1, glm::value_ptr(camera.Position));
 
 		GLuint viewPosLoc = myCoolShader.getUniform("viewPos");
 		glUniform3fv(viewPosLoc, 1, glm::value_ptr(camera.Position));
 
+		GLuint cameraFrontLoc = myCoolShader.getUniform("cameraFront");
+		glUniform3fv(cameraFrontLoc, 1, glm::value_ptr(camera.Front));
+		//cout << camera.Front.x << " " << camera.Front.y << " " << camera.Front.z << "\n";
+
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glBufferData(GL_ARRAY_BUFFER, trianglesToDraw2.size() * sizeof(Triangle), trianglesToDraw2.data(), GL_STATIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, trianglesToDraw2.size() * 3);
+		glBufferData(GL_ARRAY_BUFFER, trianglesToDraw.size() * sizeof(Triangle), trianglesToDraw.data(), GL_STATIC_DRAW);
+		glDrawArrays(GL_TRIANGLES, 0, trianglesToDraw.size() * 3);
 
 		glfwSwapBuffers(window);
 	}
@@ -122,13 +133,6 @@ int openGLmain(GLFWwindow* window){
 	glfwTerminate();
 	return 0;
 }
-
-
-
-
-glm::vec3 oldNormal = glm::vec3(0,1,0);
-
-
 
 glm::mat4 calculateFinalMatrix() {
 	glm::mat4 projectionMatrix;
@@ -147,8 +151,6 @@ glm::mat4 calculateFinalMatrix() {
 	glm::mat4 final = projectionMatrix * viewMatrix * model;
 	return final;
 }
-
-
 
 GLFWwindow* initWindow() {
 	glfwInit();
@@ -174,22 +176,16 @@ GLFWwindow* initWindow() {
 	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	glGetError();
+
 	return window;
 }
+
+//Callbacks
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 	glViewport(0, 0, width, height);
 }
-
-
-void processInput(GLFWwindow* window){
-
-	glfwPollEvents();
-
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
-}
-
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
 
@@ -213,61 +209,57 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
 }
 
 
+uint number = 0;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-//	float cameraSpeed = 20.0f * deltaTime;
-//
-//	if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
-//	//	cameraPozZ -= 1;
-//
-//	if (key == GLFW_KEY_F && action == GLFW_PRESS) {
-//		changeSeed();
-//		generateTerrain();
-//	}
-//
-//	if (key == GLFW_KEY_U && action == GLFW_PRESS) {
-//		volume.setThreshold(volume.getThreshold() + 0.05);
-//		generateTerrainGeometry();
-//	}
-//	if (key == GLFW_KEY_I && action == GLFW_PRESS) {
-//		volume.setThreshold(volume.getThreshold() - 0.05);
-//		generateTerrainGeometry();
-//	}
-//
-//	if (key == GLFW_KEY_J && action == GLFW_PRESS) {
-//		granularity -= 0.1;
-//		generateTerrain();
-//	}
-//
-//	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
-//		granularity += 0.1;
-//		generateTerrain();
-//	}
-//
-//	if (key == GLFW_KEY_N && action == GLFW_PRESS) {
-//		offset -= 0.05;
-//		generateTerrain();
-//	}
-//	if (key == GLFW_KEY_M && action == GLFW_PRESS) {
-//		offset += 0.05;
-//		generateTerrain();
-//	}
-//
-//
-//	//if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-//	//	glfwSetWindowShouldClose(window, true);
-//
-//	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-//		camera.ProcessKeyboard(FORWARD, deltaTime);
-//
-//	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-//		camera.ProcessKeyboard(BACKWARD, deltaTime);
-//
-//	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-//		camera.ProcessKeyboard(LEFT, deltaTime);
-//
-//	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-//		camera.ProcessKeyboard(RIGHT, deltaTime);
+	float cameraSpeed = 20.0f * deltaTime;
+
+	if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
+	//	cameraPozZ -= 1;
+
+	if (key == GLFW_KEY_F && action == GLFW_PRESS) {
+	/*	changeSeed();
+		generateTerrain();*/
+	}
+
+	if (key == GLFW_KEY_U && action == GLFW_PRESS) {
+	/*	volume.setThreshold(volume.getThreshold() + 0.05);
+		generateTerrainGeometry();*/
+	}
+	if (key == GLFW_KEY_I && action == GLFW_PRESS) {
+		/*volume.setThreshold(volume.getThreshold() - 0.05);
+		generateTerrainGeometry();*/
+	}
+
+	if (key == GLFW_KEY_J && action == GLFW_PRESS) {
+
+	}
+
+	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
+	}
+
+	if (key == GLFW_KEY_N && action == GLFW_PRESS) {
+		
+	}
+	if (key == GLFW_KEY_M && action == GLFW_PRESS) {
+		
+	}
+
+
+	//if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	//	glfwSetWindowShouldClose(window, true);
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera.ProcessKeyboard(FORWARD, deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera.ProcessKeyboard(LEFT, deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 

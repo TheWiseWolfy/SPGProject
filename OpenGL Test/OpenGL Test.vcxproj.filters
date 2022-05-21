@@ -36,9 +36,6 @@
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files\Objects</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer.cpp">
-      <Filter>Source Files\Renderer</Filter>
-    </ClCompile>
     <ClCompile Include="PerlinNoise.cpp">
       <Filter>Source Files\Procedural Generation</Filter>
     </ClCompile>
@@ -55,9 +52,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Source.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="stb_image.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -79,13 +73,13 @@
     <ClInclude Include="Camera.h">
       <Filter>Source Files\Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer.h">
-      <Filter>Source Files\Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="ProceduralGenerator.h">
       <Filter>Source Files\Procedural Generation</Filter>
     </ClInclude>
     <ClInclude Include="PerlinNoise.h">
+      <Filter>Source Files\Procedural Generation</Filter>
+    </ClInclude>
+    <ClInclude Include="CubeConfiguration.h">
       <Filter>Source Files\Procedural Generation</Filter>
     </ClInclude>
   </ItemGroup>

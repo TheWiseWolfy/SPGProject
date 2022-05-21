@@ -150,7 +150,6 @@
     <ClCompile Include="glad.c" />
     <ClCompile Include="PerlinNoise.cpp" />
     <ClCompile Include="ProceduralGenerator.cpp" />
-    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="stb_image.cpp" />
@@ -161,13 +160,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CubeConfiguration.h" />
     <ClInclude Include="LookUpTables.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="PerlinNoise.h" />
     <ClInclude Include="ProceduralGenerator.h" />
-    <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
-    <ClInclude Include="Source.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Triangle.h" />
     <ClInclude Include="Volume.h" />

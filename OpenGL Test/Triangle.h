@@ -14,18 +14,17 @@ struct Triangle {
     glm::vec3 color3;
     glm::vec3 normal3;
 
-    void mofify(int translateX , int translateY, int translateZ) {
+    void move(glm::vec3 distanceMoved) {
 
-        vertex1.x += translateX;
-        vertex2.x += translateX;
-        vertex3.x += translateX;
-
-        vertex1.y += translateY;
-        vertex2.y += translateY;
-        vertex3.y += translateY;
-
-        vertex1.z += translateZ;
-        vertex2.z += translateZ;
-        vertex3.z += translateZ;
+        vertex1 += distanceMoved;
+        vertex2 += distanceMoved;
+        vertex3 += distanceMoved;
     }
+
+    void color(glm::vec3 newColor) {
+        color1 = newColor;
+        color2 = newColor;
+        color3 = newColor;
+    }
+
 };

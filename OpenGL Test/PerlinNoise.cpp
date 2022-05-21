@@ -49,6 +49,7 @@ PerlinNoise::PerlinNoise(unsigned int seed) {
 }
 
 double PerlinNoise::noise(double x, double y, double z) {
+
 	// Find the unit cube that contains the point
 	int X = (int) floor(x) & 255;
 	int Y = (int) floor(y) & 255;
