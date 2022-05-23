@@ -148,6 +148,7 @@ public:
 						delete(volumeCubes[x][y][z]);
 						volumeCubes[x][y][z] = nullptr;
 					}
+
 					VolumeCube *cube = new VolumeCube(pointsInside);
 
 					volumeCubes[x][y][z] = cube;

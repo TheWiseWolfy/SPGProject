@@ -14,7 +14,7 @@ struct Triangle {
     glm::vec3 color3;
     glm::vec3 normal3;
 
-    void move(glm::vec3 distanceMoved) {
+    void translate(glm::vec3 distanceMoved) {
 
         vertex1 += distanceMoved;
         vertex2 += distanceMoved;

@@ -9,88 +9,144 @@ using namespace std;
 glm::vec3 avarageVec3(glm::vec3 polygon1, glm::vec3 polygon2);
 std::vector<CubeConfiguration> cubeConfiguration(256);
 
+//Generates 9 chunks around the player, when the player moves , 9 new chunks are generated in the right direction
+
 vector<Triangle> ProceduralGenerator::GenerateAroundPlayer(glm::vec3 playerPoz) {
 
-	glm::ivec3 playerQuadrant;
-
-	playerQuadrant.x = playerPoz.x / _sizeX;
-	playerQuadrant.y = playerPoz.y / _sizeY;
-	playerQuadrant.z = playerPoz.z / _sizeZ;
+	_playerQuadrant.x = playerPoz.x / _sizeCubesX;
+	_playerQuadrant.y = playerPoz.y / _sizeCubesY;
+	_playerQuadrant.z = playerPoz.z / _sizeCubesZ;
 
 	for (int f1 = 0; f1 < 3; f1++) {
 		for (int f2 = 0; f2 < 3; f2++) {
 			for (int f3 = 0; f3 < 3; f3++) {
-				
 
-				glm::vec3 startOfChunk = glm::vec3(playerQuadrant.x * (int)_sizeX ,
-													playerQuadrant.y * (int)_sizeY,
-													playerQuadrant.z * (int)_sizeZ );
+				cout << _playerQuadrant.x << " " << _playerQuadrant.y << " " << _playerQuadrant.z << "\n";
+			//	cout << _drawingOffset.x << "\n";
 
+				if (_playerQuadrant.x >0) {
+					if (_playerQuadrant.x > _oldPlayerQuadrant.x) {
+						 moveVolumeXPoz( _playerQuadrant.x) ;
+					}
+					else if (_playerQuadrant.x < _oldPlayerQuadrant.x) {
+						moveVolumeXNeg(_playerQuadrant.x);
+					}
+				}
+				else if (_playerQuadrant.x < 0)
+				{
+					if (_playerQuadrant.x < _oldPlayerQuadrant.x) {
+						moveVolumeXPoz(_playerQuadrant.x);
+					}
+					else if (_playerQuadrant.x > _oldPlayerQuadrant.x) {
+						moveVolumeXNeg(_playerQuadrant.x);
+					}
+				}
+				_oldPlayerQuadrant = _playerQuadrant;
 
-				glm::vec3 endOfChunk = glm::vec3(playerQuadrant.x * (int)_sizeX   ,
-													playerQuadrant.y * (int)_sizeY,
-													playerQuadrant.z * (int)_sizeZ );
-
-
-	//			cout << playerQuadrant.x + f1 << " " << playerQuadrant.y + f2 << " " << playerQuadrant.z + f3 << "\n";
-
-				generateVolume(startOfChunk, endOfChunk);
 			}
 		}
 	}
-	cout << "\n\n\n";
 
+	//We need this to notice if the player swicher quadrands
 
-	return generateTerrainGeometry();
-}
-
-void ProceduralGenerator::generateVolume(glm::vec3 startPoint, glm::vec3 endPoint ) {
-
-	for (int f1 = startPoint.x; f1 < endPoint.x; f1++) {
-		for (int f2 = startPoint.y; f2 < endPoint.y; f2++) {
-			for (int f3 = startPoint.z; f3 < endPoint.y; f3++) {
-
-				float noiseValue = _noiseGenerator.noise(
-					f1 / (float)_sizeX * _granularity, 
-					f2 / (float)_sizeY * _granularity,
-					f3 / (float)_sizeZ * _granularity);
-				_volume.setElement(f1, f3, f2, noiseValue);
-			}
-
-
-			//float noise = noiseGenerator.noise(f1 / (float)sizeV * granularity + offset, f2 / (float)sizeV * granularity + offset ,0.7 );
-			//int actualHeight = noise * sizeV ;
-
-			//if (actualHeight > sizeV) {
-			//	actualHeight = sizeV ;
-			//}
-
-			//if (actualHeight < 0) {
-			//	actualHeight = 0;
-			//}
-
-			//for (int f3 = 0; f3 < actualHeight; f3++) {
-
-			//	_volume.setElement(f1, f3, f2, 1);
-			//}
-		}
-	}
-
-}
-
-vector<Triangle> ProceduralGenerator::generateTerrainGeometry() {
-	_volume.computeCubes();
-
-	// Create and open a text file
-	ofstream MyFile("filename.txt");
+	//Gather all geometry
 
 	vector<Triangle> trianglesToDraw;
 
-	for (int f1 = 0; f1 < _sizeX - 1; f1++) {
-		for (int f2 = 0; f2 < _sizeY - 1; f2++) {
-			for (int f3 = 0; f3 < _sizeZ - 1; f3++) {
+	for (int fx = 0; fx < 3; fx++) {
+		for (int fy = 0; fy < 3; fy++) {
+			for (int fz = 0; fz < 3; fz++) {
+				vector<Triangle>& volumeGeometry = convertVolumeToGeometry(fx, fy, fz);
+				trianglesToDraw.insert(trianglesToDraw.end(), volumeGeometry.begin(), volumeGeometry.end());
+			}
+		}
+	}
+	return trianglesToDraw;
+}
 
-				int volumeIndex = _volume.getCube(f1, f2, f3).getIndex();
+void  ProceduralGenerator::moveVolumeXPoz(int x) {
+	for (int fy = 0; fy < 3; fy++) {
+		for (int fz = 0; fz < 3; fz++) {
+
+			delete(_volumes[0][fy][fz]); //Aliberam memoria
+			_volumes[0][fy][fz] = _volumes[1][fy][fz];
+			_volumes[1][fy][fz] = _volumes[2][fy][fz];
+			_volumes[2][fy][fz] = createNewVolume(x, fy, fz);
+			_drawingOffset.x = x * _sizeCubesX;
+		}
+	}
+}
+
+void  ProceduralGenerator::moveVolumeXNeg(int x) {
+
+	for (int fy = 0; fy < 3; fy++) {
+		for (int fz = 0; fz < 3; fz++) {
+
+			delete(_volumes[2][fy][fz]); //Aliberam memoria
+
+			_volumes[2][fy][fz] = _volumes[1][fy][fz];
+			_volumes[1][fy][fz] = _volumes[0][fy][fz];
+			_volumes[0][fy][fz] = createNewVolume(x, fy, fz);
+			_drawingOffset.x = x * _sizeCubesX;
+		}
+	}
+}
+
+
+void ProceduralGenerator::generateAllVolumes() {
+
+	for (int fx = 0; fx < 3; fx++) {
+		for (int fy = 0; fy < 3; fy++) {
+			for (int fz = 0; fz < 3; fz++) {
+				_volumes[fx][fy][fz] = createNewVolume(
+					 fx,
+					 fy,
+					 fz
+				);
+			}
+		}
+	}
+}
+
+//Imputs are the offsets for perlin noise generation in qudrant cordinates
+Volume* ProceduralGenerator::createNewVolume(int offsetX, int offsetY, int offsetZ) {
+
+	Volume* newVolume = new Volume(_sizeX, _sizeY, _sizeZ);
+
+	offsetX += 100;
+	offsetY += 100;
+	offsetZ += 100;
+
+	for (int fx = 0; fx < _sizeX; fx++) {
+		for (int fy = 0; fy < _sizeY; fy++) {
+			for (int fz =0; fz < _sizeZ; fz++) {
+
+				double xSampleLoc = (fx  + offsetX * _sizeCubesX) / _granularity ;
+				double ySampleLoc = (fy + offsetY * _sizeCubesY) / _granularity;
+				double zSampleLoc = (fz + offsetZ * _sizeCubesZ) / _granularity;
+
+				float noiseValue = _noiseGenerator.noise( 
+					xSampleLoc, ySampleLoc, zSampleLoc	
+				);
+
+				newVolume->setElement(fx, fy, fz, noiseValue);
+			}
+		}
+	}
+
+	newVolume->computeCubes();
+	return newVolume;
+}
+
+vector<Triangle>& ProceduralGenerator::convertVolumeToGeometry(int x,int y, int z) {
+
+	vector<Triangle>* trianglesToDraw = new vector<Triangle>;
+
+	for (int f1 = 0; f1 < _sizeCubesX; f1++) {
+		for (int f2 = 0; f2 < _sizeCubesY; f2++) {
+			for (int f3 = 0; f3 < _sizeCubesZ; f3++) {
+
+				int volumeIndex = _volumes[x][y][z]->getCube(f1, f2, f3).getIndex();
 				for(Triangle trig : cubeConfiguration[volumeIndex].triangles )
 				{
 
@@ -98,15 +154,23 @@ vector<Triangle> ProceduralGenerator::generateTerrainGeometry() {
 					float finalColorG = ((float)f2 / _sizeY);
 					float finalColorB = ((float)f1 / _sizeZ); 
 
-					trig.move(glm::vec3(f1, f2, f3));
+					int valueToTranslateX = f1 + x * _sizeCubesX + _drawingOffset.x;
+					int valueToTranslateY = f2 + y * _sizeCubesY + _drawingOffset.y;
+					int valueToTranslateZ = f3 + z * _sizeCubesZ + _drawingOffset.z;
+
+					trig.translate(glm::vec3(
+						valueToTranslateX,
+						valueToTranslateY,
+						valueToTranslateZ
+					));
+
 					trig.color(glm::vec3(finalColorR, finalColorG, finalColorB));
-					trianglesToDraw.push_back(trig);
+					trianglesToDraw->push_back(trig);
 				}
 			}
 		}
 	}
-
-	return trianglesToDraw;
+	return *trianglesToDraw;
 }
 
 void ProceduralGenerator::changeSeed() {
@@ -114,18 +178,7 @@ void ProceduralGenerator::changeSeed() {
 	_noiseGenerator = PerlinNoise((float)rand());
 }
 
-
-glm::vec3 avarageVec3(glm::vec3 polygon1, glm::vec3 polygon2) {
-	glm::vec3 tmp = polygon1 + polygon2;
-
-	tmp.x /= 2;
-	tmp.y /= 2;
-	tmp.z /= 2;
-
-	return tmp;
-}
-
-
+//Here we generatea all the variations of geometry that will be used to create the finam mesh
 void ProceduralGenerator::generateCubeConfiguration() {
 
 	for (int f1 = 0; f1 < 256; f1++) {
@@ -153,17 +206,9 @@ void ProceduralGenerator::generateCubeConfiguration() {
 			trig.vertex3 = avarageVec3(corners[a2], corners[b2]);
 
 			//Colors
-			trig.color1.r = 20;
-			trig.color1.g = 20;
-			trig.color1.b = 20;
-
-			trig.color2.r = 20;
-			trig.color2.g = 20;
-			trig.color2.b = 20;
-
-			trig.color3.r = 20;
-			trig.color3.g = 20;
-			trig.color3.b = 20;
+			trig.color1 = glm::vec3(20,20,20);
+			trig.color2 = glm::vec3(20,20,20);
+			trig.color3 = glm::vec3(20,20,20);
 
 			// Write to the file
 			trig.normal1 = glm::cross(trig.vertex1 - trig.vertex2, trig.vertex1 - trig.vertex3);
@@ -175,4 +220,15 @@ void ProceduralGenerator::generateCubeConfiguration() {
 			cubeConfiguration[f1].triangles.push_back(trig);
 			}
 	}
+}
+
+//Auxiliary fuction
+glm::vec3 avarageVec3(glm::vec3 polygon1, glm::vec3 polygon2) {
+	glm::vec3 tmp = polygon1 + polygon2;
+
+	tmp.x /= 2;
+	tmp.y /= 2;
+	tmp.z /= 2;
+
+	return tmp;
 }

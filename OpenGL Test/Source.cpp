@@ -29,7 +29,7 @@ float lastY = SCR_HEIGHT / 2.0f;
 
 bool firstMouse = true;
 vector<Triangle> trianglesToDraw;
-ProceduralGenerator gen(10, 10, 10);
+ProceduralGenerator gen(40, 40 ,40);
 
 //Local fuctions 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -102,7 +102,7 @@ int openGLmain(GLFWwindow* window){
 
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		//GLuint matrixID = glGetUniformLocation(shaderProgram,"modelViewProjectionMatrix");
