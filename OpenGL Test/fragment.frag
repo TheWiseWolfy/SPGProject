@@ -44,8 +44,9 @@ vec3 lighting(vec3 pos, vec3 normal, vec3 lightPos, vec3 viewPos, vec3 ambient, 
 		difusePower = -difusePower;
 	}
 	//Distance calculation
-	float dropOffDistance = 20;
-	
+	//float dropOffDistance = 18;
+		float dropOffDistance = 2000;
+
 	float lightDistance = length(lightPos - pos );
 	difusePower *= dropOffFuction( lightDistance / dropOffDistance);
 

@@ -40,9 +40,6 @@ private:
 	uint _sizeX;
 	uint _sizeY;
 	uint _sizeZ;
-
-	float _threshold = 0.5;
-
 public:
 
 	Volume(uint sizeX, uint sizeY, uint sizeZ) {
@@ -92,15 +89,6 @@ public:
 		}
 	}
 
-	void setThreshold(float threshold) {
-		_threshold = threshold;
-	}
-
-	float getThreshold() {
-		return _threshold;
-	}
-
-
 	VolumeCube getCube(uint x, uint y, uint z) {
 	
 		VolumeCube tmp = *volumeCubes[ x][ y][ z];
@@ -108,7 +96,7 @@ public:
 
 	}
 
-	void computeCubes() {
+	void computeCubes(float threshold) {
 		for (uint x = 0; x < _sizeX - 1; x++) {
 			for (uint y = 0; y < _sizeY - 1; y++) {
 				for (uint z = 0; z < _sizeZ - 1; z++) {
@@ -119,28 +107,28 @@ public:
 					int X = x + 1, Y = y + 1, Z = z + 1;
 
 					//Danger zone
-					if (isPointThere(x, y, z)) { \
+					if (isPointThere(x, y, z, threshold)) { \
 						pointsInside.push_back(0);
 					}
-					if (isPointThere(x, Y, z)) {  
+					if (isPointThere(x, Y, z, threshold)) {
 						pointsInside.push_back(1);  //
 					}
-					if (isPointThere(X, Y, z)) {
+					if (isPointThere(X, Y, z, threshold)) {
 						pointsInside.push_back(2);
 					}
-					if (isPointThere(X, y, z)) {
+					if (isPointThere(X, y, z, threshold)) {
 						pointsInside.push_back(3);  //
 					}
-					if (isPointThere(x, y, Z)) { //100
+					if (isPointThere(x, y, Z, threshold)) { //100
 						pointsInside.push_back(4);
 					}
-					if (isPointThere(x, Y, Z)) { 
+					if (isPointThere(x, Y, Z, threshold)) {
 						pointsInside.push_back(5);  //
 					}
-					if (isPointThere(X, Y, Z)) {  
+					if (isPointThere(X, Y, Z, threshold)) {
 						pointsInside.push_back(6);
 					}
-					if (isPointThere(X, y, Z)) { 
+					if (isPointThere(X, y, Z, threshold)) {
 						pointsInside.push_back(7); //
 					}
 
@@ -158,8 +146,8 @@ public:
 	}
 
 private:
-	bool isPointThere(uint x, uint y, uint z) {
-		if (volumeData[x][y][z] > _threshold) {
+	bool isPointThere(uint x, uint y, uint z, float threshold) {
+		if (volumeData[x][y][z] > threshold) {
 			return true;
 		}
 		return false;

@@ -17,25 +17,31 @@ private:
 	glm::ivec3 _playerQuadrant;
 	glm::ivec3 _oldPlayerQuadrant;
 	glm::vec3 _drawingOffset;
+	glm::vec3 _gridLocation = glm::vec3(-1,-1,-1);
 
 	//Perlin noise generation
 	float _granularity =16.0f;
-	float _offset = -3.0f;
+	float _threshhold = 0.5f;
 	PerlinNoise _noiseGenerator;
 
 	void changeSeed();
-	vector<Triangle>& convertVolumeToGeometry(int x, int y, int z);
+	unique_ptr<vector<Triangle>> convertVolumeToGeometry(int x, int y, int z);
 
 	static void generateCubeConfiguration();
 	Volume* createNewVolume(int offsetX, int offsetY, int offsetZ);
-	void generateAllVolumes();
 
 	//movement fuctions
-	void  moveVolumeXPoz(int x);
-	void  moveVolumeXNeg(int x);
+	void  moveVolumeXPoz();
+	void  moveVolumeXNeg();
+	void  moveVolumeYPoz();
+	void  moveVolumeYNeg();
+	void  moveVolumeZPoz();
+	void  moveVolumeZNeg();
 
-
+	void debugConsole();
 public:
+	void generateAllVolumes();
+
 	ProceduralGenerator(uint sizeX, uint sizeY, uint sizeZ) {
 		_sizeX = sizeX / 3;
 		_sizeY = sizeY / 3;
@@ -53,6 +59,22 @@ public:
 		generateCubeConfiguration();
 	}
 	vector<Triangle> GenerateAroundPlayer(glm::vec3 playerPoz);
+
+	void setThreshhold(float offset) {
+		_threshhold = offset;
+	}
+
+	float getThreshhold() {
+		return _threshhold;
+	}
+
+	void setGranularity(float granurality) {
+		_granularity = granurality;
+	}
+
+	float getGranularity() {
+		return _granularity;
+	}
 };
 
 const glm::vec3 corners[8] = {

@@ -27,9 +27,10 @@ const unsigned int SCR_HEIGHT = 900;
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 
-bool firstMouse = true;
-vector<Triangle> trianglesToDraw;
-ProceduralGenerator gen(40, 40 ,40);
+bool _firstMouse = true;
+vector<Triangle> _trianglesToDraw;
+uint _generationZoneSize = 42;
+ProceduralGenerator _generator(_generationZoneSize, _generationZoneSize, _generationZoneSize);
 
 //Local fuctions 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -88,7 +89,7 @@ int openGLmain(GLFWwindow* window){
 	//Main aplication loop
 	while (!glfwWindowShouldClose(window))
 	{
-		trianglesToDraw = gen.GenerateAroundPlayer(camera.Position);
+		_trianglesToDraw = _generator.GenerateAroundPlayer(camera.Position);
 
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
@@ -102,7 +103,7 @@ int openGLmain(GLFWwindow* window){
 
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		//GLuint matrixID = glGetUniformLocation(shaderProgram,"modelViewProjectionMatrix");
@@ -124,8 +125,8 @@ int openGLmain(GLFWwindow* window){
 
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glBufferData(GL_ARRAY_BUFFER, trianglesToDraw.size() * sizeof(Triangle), trianglesToDraw.data(), GL_STATIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, trianglesToDraw.size() * 3);
+		glBufferData(GL_ARRAY_BUFFER, _trianglesToDraw.size() * sizeof(Triangle), _trianglesToDraw.data(), GL_STATIC_DRAW);
+		glDrawArrays(GL_TRIANGLES, 0, _trianglesToDraw.size() * 3);
 
 		glfwSwapBuffers(window);
 	}
@@ -192,11 +193,11 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
 	float xpos = static_cast<float>(xposIn);
 	float ypos = static_cast<float>(yposIn);
 
-	if (firstMouse)
+	if (_firstMouse)
 	{
 		lastX = xpos;
 		lastY = ypos;
-		firstMouse = false;
+		_firstMouse = false;
 	}
 
 	float xoffset = xpos - lastX;
@@ -215,40 +216,35 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 {
 	float cameraSpeed = 20.0f * deltaTime;
 
-	if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
-	//	cameraPozZ -= 1;
 
-	if (key == GLFW_KEY_F && action == GLFW_PRESS) {
-	/*	changeSeed();
-		generateTerrain();*/
+	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS){
+		_generator.setThreshhold(_generator.getThreshhold() + 0.05f);
+		_generator.generateAllVolumes();
+	}
+	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+		_generator.setThreshhold(_generator.getThreshhold() - 0.05f);
+		_generator.generateAllVolumes();
 	}
 
-	if (key == GLFW_KEY_U && action == GLFW_PRESS) {
-	/*	volume.setThreshold(volume.getThreshold() + 0.05);
-		generateTerrainGeometry();*/
+	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
+		_generator.setGranularity(_generator.getGranularity() + 0.5f);
+		_generator.generateAllVolumes();
 	}
-	if (key == GLFW_KEY_I && action == GLFW_PRESS) {
-		/*volume.setThreshold(volume.getThreshold() - 0.05);
-		generateTerrainGeometry();*/
+	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
+		_generator.setGranularity(_generator.getGranularity() - 0.5f);
+		_generator.generateAllVolumes();
 	}
-
-	if (key == GLFW_KEY_J && action == GLFW_PRESS) {
-
-	}
-
-	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
-	}
-
-	if (key == GLFW_KEY_N && action == GLFW_PRESS) {
-		
-	}
-	if (key == GLFW_KEY_M && action == GLFW_PRESS) {
-		
-	}
-
 
 	//if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	//	glfwSetWindowShouldClose(window, true);
+
+
+	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+		camera.ProcessKeyboard(DOWN, deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+		camera.ProcessKeyboard(UP, deltaTime);
+
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
