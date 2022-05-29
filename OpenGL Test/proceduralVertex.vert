@@ -8,7 +8,9 @@ out vec3 outPoz;
 out vec3 outColor;
 out vec3 outNormal;
 
-//out vec2 TexCoord;
+uniform vec3 lightPos;
+uniform vec3 viewPos;
+uniform vec3 cameraFront;
 
 uniform mat4 modelViewProjectionMatrix;
 

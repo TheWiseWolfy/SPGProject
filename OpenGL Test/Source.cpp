@@ -4,6 +4,11 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 
+//An simp
+#include <assimp/Importer.hpp>      // C++ importer interface
+#include <assimp/scene.h>           // Output data structure
+#include <assimp/postprocess.h>     // Post processing flags
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -13,7 +18,7 @@
 #include "ProceduralGenerator.h"
 #include "Shader.h"
 #include "Camera.h"
-
+#include "Model.h"
 #include "Triangle.h"
 
 #define PI glm::pi<float>()
@@ -36,7 +41,7 @@ ProceduralGenerator _generator(_generationZoneSize, _generationZoneSize, _genera
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-glm::mat4 calculateFinalMatrix();
+glm::mat4 calculateFinalMatrix(glm::mat4 model);
 int openGLmain(GLFWwindow* window);
 GLFWwindow* initWindow();
 
@@ -50,11 +55,14 @@ int main() {
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 
-
 	openGLmain(window);
 }
 
 int openGLmain(GLFWwindow* window){
+
+	Shader spaceshipShader = Shader("spaceshipVertex.vert", "spaceshipFragment.frag");
+	char name[] = "spaceship.obj";
+	Model spaceship(name);
 
 
 	glEnable(GL_DEPTH_TEST);
@@ -62,8 +70,8 @@ int openGLmain(GLFWwindow* window){
 	glDepthFunc(GL_LEQUAL);
 	glDepthRange(0.0f, 4.0f);
 
-	Shader myCoolShader = Shader("vertex.vert", "fragment.frag");
-	glUseProgram(myCoolShader.getID());
+	Shader proceduralTerrainTexture = Shader("proceduralVertex.vert", "proceduralFragment.frag");
+	glUseProgram(proceduralTerrainTexture.getID());
 
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
@@ -72,7 +80,6 @@ int openGLmain(GLFWwindow* window){
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(glm::vec3), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -104,29 +111,64 @@ int openGLmain(GLFWwindow* window){
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+
+		glUseProgram(proceduralTerrainTexture.getID());
+		glBindVertexArray(VAO);
 
 		//GLuint matrixID = glGetUniformLocation(shaderProgram,"modelViewProjectionMatrix");
-		GLuint matrixID = myCoolShader.getUniform("modelViewProjectionMatrix");
-		
-		glm::mat4 final = calculateFinalMatrix();
+		GLuint matrixID = proceduralTerrainTexture.getUniform("modelViewProjectionMatrix");
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::mat4 final = calculateFinalMatrix(model);
 		glUniformMatrix4fv(matrixID, 1, GL_FALSE, glm::value_ptr(final));
 		
-		int lightPosLoc = myCoolShader.getUniform("lightPos");
+		int lightPosLoc = proceduralTerrainTexture.getUniform("lightPos");
 		//glUniform3fv(lightPosLoc, 1, glm::value_ptr(glm::vec3(0,0,90)   ));
 		glUniform3fv(lightPosLoc, 1, glm::value_ptr(camera.Position));
 
-		GLuint viewPosLoc = myCoolShader.getUniform("viewPos");
+		GLuint viewPosLoc = proceduralTerrainTexture.getUniform("viewPos");
 		glUniform3fv(viewPosLoc, 1, glm::value_ptr(camera.Position));
 
-		GLuint cameraFrontLoc = myCoolShader.getUniform("cameraFront");
+		GLuint cameraFrontLoc = proceduralTerrainTexture.getUniform("cameraFront");
 		glUniform3fv(cameraFrontLoc, 1, glm::value_ptr(camera.Front));
 		//cout << camera.Front.x << " " << camera.Front.y << " " << camera.Front.z << "\n";
 
-
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glBufferData(GL_ARRAY_BUFFER, _trianglesToDraw.size() * sizeof(Triangle), _trianglesToDraw.data(), GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLES, 0, _trianglesToDraw.size() * 3);
+
+		//HERE WE DRAW SPACESHIP
+		glUseProgram(spaceshipShader.getID());
+
+		GLuint matrixIDSpaceship = spaceshipShader.getUniform("modelViewProjectionMatrix");
+		model = glm::mat4(1.0f);
+
+		/*model *= glm::rotate(rotAngle1, glm::vec3(1, 0, 0));
+		model *= glm::rotate(rotAngle2, glm::vec3(0, 1, 0));
+		model *= glm::rotate(rotAngle2, glm::vec3(1, 0, 0));*/
+
+		model = glm::translate(model, camera.Position + (glm::vec3(5, 5, 5) * camera.Front));
+
+		model =	glm::scale(model, glm::vec3(0.3, 0.3, 0.3));
+		final = calculateFinalMatrix(model);
+		glUniformMatrix4fv(matrixIDSpaceship, 1, GL_FALSE, glm::value_ptr(final));
+
+		int lightPosLocSpaceship = spaceshipShader.getUniform("lightPos");
+		//glUniform3fv(lightPosLoc, 1, glm::value_ptr(glm::vec3(0,0,90)   ));
+		glUniform3fv(lightPosLocSpaceship, 1, glm::value_ptr(camera.Position));
+
+		GLuint viewPosLocSpaceship = spaceshipShader.getUniform("viewPos");
+		glUniform3fv(viewPosLocSpaceship, 1, glm::value_ptr(camera.Position));
+
+		GLuint cameraFrontLocSpaceship = spaceshipShader.getUniform("cameraFront");
+		glUniform3fv(cameraFrontLocSpaceship, 1, glm::value_ptr(camera.Front));
+
+		glm::mat4 inverseModelMatrix = glm::transpose(glm::inverse(model));
+		GLuint inverseModelMatrixSpaceship = spaceshipShader.getUniform("ModelMatrix");
+		glUniformMatrix4fv(inverseModelMatrixSpaceship, 1, GL_FALSE, glm::value_ptr(inverseModelMatrix));
+
+		//cout << camera.Front.x << " " << camera.Front.y << " " << camera.Front.z << "\n";
+
+		spaceship.Draw(spaceshipShader);
 
 		glfwSwapBuffers(window);
 	}
@@ -135,7 +177,7 @@ int openGLmain(GLFWwindow* window){
 	return 0;
 }
 
-glm::mat4 calculateFinalMatrix() {
+glm::mat4 calculateFinalMatrix(glm::mat4 model) {
 	glm::mat4 projectionMatrix;
 
 	//Perspective Matrix
@@ -143,9 +185,6 @@ glm::mat4 calculateFinalMatrix() {
 
 	//View Matrix
 	glm::mat4 viewMatrix = camera.GetViewMatrix();
-
-	// Model Matrix
-	glm::mat4 model = glm::mat4(1.0f);
 
 	//viewMatrix = glm::translate(viewMatrix, glm::vec3(cameraPozX, cameraPozY, cameraPozZ));
 

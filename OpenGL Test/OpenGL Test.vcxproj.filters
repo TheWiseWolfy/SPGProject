@@ -22,6 +22,9 @@
     <Filter Include="Source Files\Procedural Generation">
       <UniqueIdentifier>{edd44d47-5904-4e15-ae17-c4739e8feced}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shaders">
+      <UniqueIdentifier>{1846188d-65db-475d-9769-4adcef784d5e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">
@@ -42,13 +45,25 @@
     <ClCompile Include="ProceduralGenerator.cpp">
       <Filter>Source Files\Procedural Generation</Filter>
     </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="fragment.frag">
-      <Filter>Source Files</Filter>
+    <None Include="proceduralVertex.vert">
+      <Filter>Source Files\Shaders</Filter>
     </None>
-    <None Include="vertex.vert">
-      <Filter>Source Files</Filter>
+    <None Include="proceduralFragment.frag">
+      <Filter>Source Files\Shaders</Filter>
+    </None>
+    <None Include="spaceshipVertex.vert">
+      <Filter>Source Files\Shaders</Filter>
+    </None>
+    <None Include="spaceshipFragment.frag">
+      <Filter>Source Files\Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -62,9 +77,6 @@
       <Filter>Source Files\Objects</Filter>
     </ClInclude>
     <ClInclude Include="Volume.h">
-      <Filter>Source Files\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="LookUpTables.h">
       <Filter>Source Files\Objects</Filter>
     </ClInclude>
     <ClInclude Include="Triangle.h">
@@ -81,6 +93,12 @@
     </ClInclude>
     <ClInclude Include="CubeConfiguration.h">
       <Filter>Source Files\Procedural Generation</Filter>
+    </ClInclude>
+    <ClInclude Include="LookUpTables.h">
+      <Filter>Source Files\Procedural Generation</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Source Files\Objects</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
